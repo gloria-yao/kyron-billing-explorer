@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data/kyron.db"
+}
+
+model MedicareIpGeoService2023 {
+  id                   Int     @id @default(autoincrement())
+  rndrng_prvdr_geo_lvl  String
+  rndrng_prvdr_geo_cd   String?
+  rndrng_prvdr_geo_desc String
+  drg_cd               Int
+  drg_desc             String
+  tot_dschrgs          Int
+  avg_submtd_cvrd_chrg Float
+  avg_tot_pymt_amt     Float
+  avg_mdcr_pymt_amt    Float
+
+  @@map("medicare_ip_geo_service_2023")
+  @@index([rndrng_prvdr_geo_lvl])
+  @@index([rndrng_prvdr_geo_desc])
+  @@index([drg_cd])
+}

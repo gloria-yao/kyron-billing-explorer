@@ -1,0 +1,35 @@
+{
+  "name": "kyron-billing-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "import-data": "tsx scripts/import-data.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.1",
+    "adm-zip": "0.5.16",
+    "better-sqlite3": "^12.5.0",
+    "csv-parse": "5.6.0",
+    "next": "14.2.22",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "recharts": "2.12.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/react": "18.3.17",
+    "@types/react-dom": "18.3.5",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.22",
+    "prisma": "6.19.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
+  }
+}
