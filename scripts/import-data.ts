@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+
 import AdmZip from 'adm-zip';
 import { parse } from 'csv-parse/sync';
 import * as fs from 'fs';
@@ -6,7 +6,6 @@ import * as path from 'path';
 
 const prisma = new PrismaClient();
 
-// Path to the ZIP file (same directory as this script or project root)
 const ZIP_FILE_PATH = path.join(process.cwd(), 'Medicare_IP_Hospitals_by_Geography_and_Service_2023.zip');
 const CSV_FILE_NAME = 'Medicare_IP_Hospitals_by_Geography_and_Service_2023.csv';
 
@@ -23,47 +22,47 @@ interface CSVRow {
 }
 
 async function importData() {
-  console.log('🚀 Starting data import...\n');
+  console.log('Starting data import...\n');
 
   // 1. Check if ZIP file exists
   if (!fs.existsSync(ZIP_FILE_PATH)) {
-    console.error(`❌ ZIP file not found at: ${ZIP_FILE_PATH}`);
+    console.error(`ZIP file not found at: ${ZIP_FILE_PATH}`);
     console.error('Please place the ZIP file in the project root directory.');
     process.exit(1);
   }
 
-  console.log(`✓ Found ZIP file: ${ZIP_FILE_PATH}`);
+  console.log(`Found ZIP file: ${ZIP_FILE_PATH}`);
 
   // 2. Extract CSV from ZIP
-  console.log('📦 Extracting CSV from ZIP...');
+  console.log('Extracting CSV from ZIP...');
   const zip = new AdmZip(ZIP_FILE_PATH);
   const csvEntry = zip.getEntry(CSV_FILE_NAME);
 
   if (!csvEntry) {
-    console.error(`❌ CSV file "${CSV_FILE_NAME}" not found in ZIP`);
+    console.error(`CSV file "${CSV_FILE_NAME}" not found in ZIP`);
     process.exit(1);
   }
 
   const csvContent = zip.readAsText(csvEntry);
-  console.log(`✓ Extracted CSV (${csvContent.length.toLocaleString()} characters)\n`);
+  console.log(`Extracted CSV (${csvContent.length.toLocaleString()} characters)\n`);
 
   // 3. Parse CSV
-  console.log('📊 Parsing CSV...');
+  console.log('Parsing CSV...');
   const records: CSVRow[] = parse(csvContent, {
     columns: true,
     skip_empty_lines: true,
     trim: true,
   });
 
-  console.log(`✓ Parsed ${records.length.toLocaleString()} records\n`);
+  console.log(`Parsed ${records.length.toLocaleString()} records\n`);
 
   // 4. Clear existing data (idempotent approach)
-  console.log('🗑️  Clearing existing data...');
+  console.log('Clearing existing data...');
   const deleteResult = await prisma.medicareIpGeoService2023.deleteMany({});
-  console.log(`✓ Deleted ${deleteResult.count} existing records\n`);
+  console.log(`Deleted ${deleteResult.count} existing records\n`);
 
   // 5. Transform and insert data
-  console.log('💾 Inserting data into database...');
+  console.log('Inserting data into database...');
   
   const batchSize = 1000;
   let inserted = 0;
@@ -97,17 +96,17 @@ async function importData() {
   const totalCount = await prisma.medicareIpGeoService2023.count();
   const sampleRecord = await prisma.medicareIpGeoService2023.findFirst();
 
-  console.log('📈 Database Statistics:');
+  console.log('Database Statistics:');
   console.log(`   Total records: ${totalCount.toLocaleString()}`);
   console.log(`   Sample record ID: ${sampleRecord?.id}`);
   console.log(`   Sample DRG: ${sampleRecord?.drg_cd} - ${sampleRecord?.drg_desc}`);
   console.log(`   Sample Geography: ${sampleRecord?.rndrng_prvdr_geo_desc} (${sampleRecord?.rndrng_prvdr_geo_lvl})`);
-  console.log('\n✅ Import successful!');
+  console.log('\n Import successful!');
 }
 
 importData()
   .catch((error) => {
-    console.error('❌ Import failed:', error);
+    console.error('Import failed:', error);
     process.exit(1);
   })
   .finally(async () => {
