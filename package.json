@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "22.10.2",
     "@types/react": "18.3.17",
     "@types/react-dom": "18.3.5",
