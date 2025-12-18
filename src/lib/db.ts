@@ -1,37 +1,40 @@
 // src/lib/db.ts
 import Database from "better-sqlite3";
-import path from "path";
 import fs from "fs";
+import path from "path";
 
 let _db: Database.Database | null = null;
 
-function resolveDbPath() {
-  // Preferred: set DB_PATH in Vercel env vars to a committed file like "data/medicare.db"
-  const envPath = process.env.DB_PATH;
-  if (envPath) return path.join(process.cwd(), envPath);
+function ensureTmpDb(): string {
+  const tmpDir = "/tmp";
+  const tmpDbPath = path.join(tmpDir, "kyron.db");
 
-  // Fallback: common locations
-  const candidates = [
-    path.join(process.cwd(), "data", "medicare.db"),
-    path.join(process.cwd(), "medicare.db"),
-  ];
+  if (fs.existsSync(tmpDbPath)) return tmpDbPath;
 
-  const found = candidates.find((p) => fs.existsSync(p));
-  if (!found) {
+  // DB should live in your repo at data/kyron.db
+  const repoDbPath = path.join(process.cwd(), "data", "kyron.db");
+
+  if (!fs.existsSync(repoDbPath)) {
     throw new Error(
-      `SQLite DB file not found. Set DB_PATH (e.g. "data/medicare.db") or add the DB file to the repo. Looked in: ${candidates.join(
-        ", "
-      )}`
+      `SQLite DB not found. Expected at ${repoDbPath}. Make sure data/kyron.db is committed to GitHub.`
     );
   }
-  return found;
+
+  fs.mkdirSync(tmpDir, { recursive: true });
+  fs.copyFileSync(repoDbPath, tmpDbPath);
+
+  return tmpDbPath;
 }
 
 export function getDb() {
   if (_db) return _db;
 
-  const dbPath = resolveDbPath();
+  const dbPath = ensureTmpDb();
   _db = new Database(dbPath, { readonly: true });
+
+  // Optional safety: make reads faster / safer in serverless
+  _db.pragma("journal_mode = WAL");
+  _db.pragma("synchronous = NORMAL");
 
   return _db;
 }
