@@ -1,1 +1,4 @@
-touch src/types/adm-zip.d.ts
+declare module "adm-zip" {
+  const AdmZip: any;
+  export default AdmZip;
+}
