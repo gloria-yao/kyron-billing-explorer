@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kyron Billing Explorer
 
-## Getting Started
+A small Next.js dashboard for exploring **Medicare Inpatient Prospective Payment System (IPPS)** billing data by geography and DRG (Diagnosis Related Group). The app loads the dataset into a local SQLite database and exposes a few read-only API endpoints used by the UI.
 
-First, run the development server:
+## What this shows
+
+For a selected:
+- **Geography level** (e.g., National, State)
+- **Geography** (e.g., National, Rhode Island)
+- Optional **DRG** (e.g., hip/knee replacement)
+
+…the dashboard queries up to 500 matching rows and displays:
+- Average submitted covered charges
+- Average total payment
+- Average Medicare payment
+- Total discharges
+
+## Data
+
+The app expects the IPPS dataset to be imported into a SQLite table named:
+
+`medicare_ip_geo_service_2023`
+
+Key columns used:
+- `rndrng_prvdr_geo_lvl`
+- `rndrng_prvdr_geo_desc`
+- `drg_cd`, `drg_desc`
+- `tot_dschrgs`
+- `avg_submtd_cvrd_chrg`
+- `avg_tot_pymt_amt`
+- `avg_mdcr_pymt_amt`
+
+## API
+
+These endpoints back the UI:
+
+- `GET /api/geo-levels`  
+  Returns available geography levels.
+
+- `GET /api/geos?level=...&search=...`  
+  Returns matching geographies for a level (optional `search`).
+
+- `GET /api/drgs?search=...`  
+  Returns matching DRGs (optional `search`; returns a small default set if empty).
+
+- `GET /api/records?level=...&geo=...&drg_cd=...`  
+  Returns up to 500 matching records sorted by highest submitted charges.
+
+## Local development
+
+Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+npm install

@@ -1,9 +1,14 @@
-// src/app/api/geo-levels/route.ts
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+type GeoLevelRow = { level: string };
+
+function jsonError(message: string, status = 500) {
+  return NextResponse.json({ error: message }, { status });
+}
 
 export async function GET() {
   try {
@@ -18,10 +23,11 @@ export async function GET() {
         ORDER BY level ASC
         `
       )
-      .all() as Array<{ level: string }>;
+      .all() as GeoLevelRow[];
 
     return NextResponse.json(rows);
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Unknown error' }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unexpected error';
+    return jsonError(message);
   }
 }

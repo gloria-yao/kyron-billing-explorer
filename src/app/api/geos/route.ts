@@ -1,40 +1,29 @@
-// src/app/api/geos/route.ts
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+type GeoRow = { description: string };
+
+function jsonError(message: string, status = 500) {
+  return NextResponse.json({ error: message }, { status });
+}
+
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
-    const level = (url.searchParams.get('level') ?? '').trim();
-    const search = (url.searchParams.get('search') ?? '').trim();
+    const { searchParams } = new URL(req.url);
+    const level = (searchParams.get('level') ?? '').trim();
+    const search = (searchParams.get('search') ?? '').trim();
 
-    if (!level) {
-      return NextResponse.json({ error: 'Missing required query param: level' }, { status: 400 });
-    }
+    if (!level) return jsonError('Missing query param: level', 400);
 
     const db = getDb();
 
-    let rows: Array<{ description: string }> = [];
+    const LIMIT = 200;
 
-    if (search) {
-      rows = db
-        .prepare(
-          `
-          SELECT DISTINCT rndrng_prvdr_geo_desc AS description
-          FROM medicare_ip_geo_service_2023
-          WHERE rndrng_prvdr_geo_lvl = ?
-            AND rndrng_prvdr_geo_desc IS NOT NULL
-            AND rndrng_prvdr_geo_desc LIKE ?
-          ORDER BY description ASC
-          LIMIT 200
-          `
-        )
-        .all(level, `%${search}%`) as Array<{ description: string }>;
-    } else {
-      rows = db
+    if (!search) {
+      const rows = db
         .prepare(
           `
           SELECT DISTINCT rndrng_prvdr_geo_desc AS description
@@ -42,14 +31,31 @@ export async function GET(req: Request) {
           WHERE rndrng_prvdr_geo_lvl = ?
             AND rndrng_prvdr_geo_desc IS NOT NULL
           ORDER BY description ASC
-          LIMIT 200
+          LIMIT ?
           `
         )
-        .all(level) as Array<{ description: string }>;
+        .all(level, LIMIT) as GeoRow[];
+
+      return NextResponse.json(rows);
     }
 
+    const rows = db
+      .prepare(
+        `
+        SELECT DISTINCT rndrng_prvdr_geo_desc AS description
+        FROM medicare_ip_geo_service_2023
+        WHERE rndrng_prvdr_geo_lvl = ?
+          AND rndrng_prvdr_geo_desc IS NOT NULL
+          AND rndrng_prvdr_geo_desc LIKE ?
+        ORDER BY description ASC
+        LIMIT ?
+        `
+      )
+      .all(level, `%${search}%`, LIMIT) as GeoRow[];
+
     return NextResponse.json(rows);
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Unknown error' }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unexpected error';
+    return jsonError(message);
   }
 }
